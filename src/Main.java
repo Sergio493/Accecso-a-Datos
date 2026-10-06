@@ -56,7 +56,7 @@ public class Main {
             }
 
         } catch (SQLException e) {
-            System.out.println("Error");
+            System.out.println("Error en");
             e.printStackTrace();
         }
 

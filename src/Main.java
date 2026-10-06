@@ -56,7 +56,7 @@ public class Main {
             }
 
         } catch (SQLException e) {
-            System.out.println("Error en la base de datos:");
+            System.out.println("Error");
             e.printStackTrace();
         }
 

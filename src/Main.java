@@ -1,65 +1,47 @@
 
-import java.sql.*;
+import modelo.Telefono;
+import modelo.Usuarios;
+import repository.TelefonoDao;
+import repository.TelefonoDaoImp;
+import repository.UsuarioDao;
+import repository.UsuarioDaoImp;
+
+import java.sql.SQLException;
+import java.util.List;
 import java.util.Scanner;
 
 public class Main {
 
     public static void main(String[] args) {
+        DatabaseConection databaseConection = new DatabaseConection();
+        UsuarioDao usuarioDao = new UsuarioDaoImp(databaseConection);
+        TelefonoDao telefonoDao = new TelefonoDaoImp(databaseConection);
 
-        String url = "jdbc:sqlite:prueba.db";
+        try (Scanner teclado = new Scanner(System.in)) {
+            System.out.print("Introduce el nombre del usuario: ");
+            String nombre = teclado.nextLine();
 
-        String sqlUsuario = """
-                SELECT cod
-                FROM usuarios
-                WHERE nombre = ?
-                """;
+            try {
+                List<Usuarios> usuarios = usuarioDao.obtenerUsuariosPorNombre(nombre);
 
-        String sqlTelefonos = """
-                SELECT usuarios.nombre, telefonos.telefono
-                FROM usuarios
-                INNER JOIN telefonos
-                ON usuarios.cod = telefonos.cod
-                WHERE usuarios.nombre = ?
-                """;
+                for (Usuarios usuario : usuarios) {
+                    List<Telefono> telefonos = telefonoDao.obtenerTelefonosPorUsuario(usuario.getId());
 
-        Scanner teclado = new Scanner(System.in);
-
-        System.out.print("Introduce el nombre del usuario: ");
-        String nombre = teclado.nextLine();
-
-        try (Connection conexion = DriverManager.getConnection(url);
-             PreparedStatement stmtUsuario = conexion.prepareStatement(sqlUsuario)) {
-
-            stmtUsuario.setString(1, nombre);
-
-            try (ResultSet rsUsuario = stmtUsuario.executeQuery()) {
-
-                if (!rsUsuario.next()) {
-                    System.out.println("Nothing there");
-                } else {
-                    try (PreparedStatement stmtTelefonos = conexion.prepareStatement(sqlTelefonos)) {
-                        stmtTelefonos.setString(1, nombre);
-                        try (ResultSet rsTelefonos = stmtTelefonos.executeQuery()) {
-                            boolean tieneTelefono = false;
-                            while (rsTelefonos.next()) {
-                                tieneTelefono = true;
-
-                                System.out.println("Teléfono:"
-                                        + rsTelefonos.getString("telefono"));
-                            }
-                            if (!tieneTelefono) {
-                                System.out.println("Este no tiene iphone");
-                            }
+                    if (telefonos.isEmpty()) {
+                        System.out.println("Este no tiene iphone");
+                    } else {
+                        for (Telefono telefono : telefonos) {
+                            System.out.println("Teléfono: " + telefono.getTelefono());
                         }
                     }
                 }
+
+                if (usuarios.isEmpty()) {
+                    System.out.println("Nothing there");
+                }
+            } catch (SQLException e) {
+                System.err.println("Error al consultar usuarios o teléfonos: " + e.getMessage());
             }
-
-        } catch (SQLException e) {
-            System.out.println("Error en");
-            e.printStackTrace();
         }
-
-        teclado.close();
     }
 }
